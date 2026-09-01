@@ -126,22 +126,26 @@ Suggested env vars already scaffolded:
 
 ## GitHub Actions
 
-A GitHub Actions workflow is included at `.github/workflows/playwright-python.yml`.
+GitHub Actions workflows are included at:
 
-It will:
+- `.github/workflows/playwright-python.yml` for the public smoke suite
+- `.github/workflows/playwright-invalid-login.yml` for the invalid login test
+
+They will:
 
 - run on push to `main`
 - run on pull requests to `main`
 - support manual execution with `workflow_dispatch`
 - install Python dependencies
 - install Playwright Chromium browser
-- execute the public smoke suite
+- execute the targeted pytest suite
 - upload `artifacts/` and `uploads/screenshots/` as workflow artifacts
 
 ### Notes
 
-- The workflow currently runs the public smoke suite to avoid failures caused by environment-specific login behavior.
-- You can later extend it to run login or data-driven suites using repository secrets and environment variables.
+- The smoke workflow runs the public smoke suite.
+- The invalid-login workflow runs `tests/test_portal_login_invalid_credentials.py` with the `auth` marker.
+- You can later extend these workflows to use repository secrets and environment variables for broader authenticated coverage.
 
 ## Assumptions / limitations
 
