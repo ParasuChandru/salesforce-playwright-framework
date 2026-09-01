@@ -130,6 +130,7 @@ GitHub Actions workflows are included at:
 
 - `.github/workflows/playwright-python.yml` for the public smoke suite
 - `.github/workflows/playwright-invalid-login.yml` for the invalid login test
+- authenticated business workflow tests under `tests/test_weather_modification_individual_details_validation.py`
 
 They will:
 
@@ -145,6 +146,8 @@ They will:
 
 - The smoke workflow runs the public smoke suite.
 - The invalid-login workflow runs `tests/test_portal_login_invalid_credentials.py` with the `auth` marker.
+- The weather modification test script is available at `tests/test_weather_modification_individual_details_validation.py` and currently validates the live authenticated path up to the actual blocker encountered in QA2.
+- The current QA2 flow does not expose the expected field-level Individual Details form from the CSV; instead it stops at a required Business Information Question step, which is asserted and reported as the observed runtime behavior.
 - You can later extend these workflows to use repository secrets and environment variables for broader authenticated coverage.
 
 ## Assumptions / limitations
