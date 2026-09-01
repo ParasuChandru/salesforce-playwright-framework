@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -15,6 +16,8 @@ load_dotenv()
 @pytest.fixture(scope="session", autouse=True)
 def ensure_artifacts_dir() -> None:
     Path("artifacts").mkdir(exist_ok=True)
+    Path("uploads").mkdir(exist_ok=True)
+    Path("uploads/screenshots").mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture(scope="session")
@@ -56,3 +59,19 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     setattr(item, f"rep_{rep.when}", rep)
+
+    if rep.when == "call":
+        tracker = getattr(item, "runtime_tracker", None)
+        report_path = getattr(item, "runtime_report_path", None)
+        if tracker and report_path:
+            payload = json.loads(Path(report_path).read_text(encoding="utf-8"))
+            item.user_properties.extend(
+                [
+                    ("runtime_status", payload.get("status")),
+                    ("runtime_start_time", payload.get("start_time")),
+                    ("runtime_end_time", payload.get("end_time")),
+                    ("runtime_total", payload.get("total_runtime")),
+                    ("runtime_screenshot_folder", payload.get("screenshot_folder")),
+                    ("runtime_report_path", report_path),
+                ]
+            )
