@@ -23,6 +23,10 @@ class WeatherModificationPage(BasePage):
         return self.page.get_by_text("Weather Modification License", exact=False)
 
     @property
+    def dashboard_heading(self) -> Locator:
+        return self.page.get_by_text("TDLR CORE Dashboard", exact=False)
+
+    @property
     def individual_radio(self) -> Locator:
         return self.page.get_by_role("radio", name="Individual")
 
@@ -53,6 +57,16 @@ class WeatherModificationPage(BasePage):
     @property
     def individual_details_heading(self) -> Locator:
         return self.page.get_by_role("heading", name="Individual Details")
+
+    def draft_card(self, draft_number: str) -> Locator:
+        card = self.page.locator("runtime_omnistudio_flexcards-block").filter(
+            has_text="Weather Modification License"
+        ).filter(has_text=draft_number)
+        if card.count() > 0:
+            return card.first
+        return self.page.locator("article, section, div, li, tr, [role='row']").filter(
+            has_text=f"Weather Modification License {draft_number}"
+        ).first
 
     def login(self, username: str, password: str) -> None:
         self.login_page.open()
@@ -86,10 +100,33 @@ class WeatherModificationPage(BasePage):
             wait_for_salesforce_ready(self.page)
             dismiss_generic_overlays(self.page)
 
+    def open_weather_modification_draft(self, draft_number: str) -> None:
+        wait_for_salesforce_ready(self.page)
+        dismiss_generic_overlays(self.page)
+        expect(self.dashboard_heading).to_be_visible(timeout=30000)
+
+        draft_card = self.draft_card(draft_number)
+        expect(draft_card).to_be_visible(timeout=30000)
+        expect(draft_card).to_contain_text("Weather Modification License")
+
+        edit_application = draft_card.get_by_role("link", name="Edit Application")
+        if edit_application.count() == 0:
+            edit_application = draft_card.get_by_role("button", name="Edit Application").first
+        if edit_application.count() == 0:
+            edit_application = draft_card.locator("a,button").filter(has_text="Edit Application").first
+
+        expect(edit_application).to_be_visible(timeout=20000)
+        edit_application.scroll_into_view_if_needed()
+        edit_application.click(force=True)
+        wait_for_salesforce_ready(self.page)
+        dismiss_generic_overlays(self.page)
+
     def attempt_reach_individual_details(self) -> dict:
         result = {
             "individual_details_heading_visible": False,
             "business_question_visible": False,
+            "new_license_application_visible": False,
+            "draft_number_visible": False,
             "current_url": self.page.url,
             "product_text": "",
             "blocker": "",
@@ -103,6 +140,25 @@ class WeatherModificationPage(BasePage):
             if self.business_question_heading.count() > 0 and self.business_question_heading.first.is_visible():
                 result["business_question_visible"] = True
                 result["blocker"] = "Business Information Question step requires selection before proceeding"
+                break
+            if self.page.get_by_text("New License Application", exact=False).count() > 0:
+                try:
+                    if self.page.get_by_text("New License Application", exact=False).first.is_visible():
+                        result["new_license_application_visible"] = True
+                except Exception:
+                    pass
+            if self.page.get_by_text("DRAFT-0000006127", exact=False).count() > 0:
+                try:
+                    if self.page.get_by_text("DRAFT-0000006127", exact=False).first.is_visible():
+                        result["draft_number_visible"] = True
+                except Exception:
+                    pass
+            if (
+                result["individual_details_heading_visible"]
+                or result["business_question_visible"]
+                or result["new_license_application_visible"]
+                or result["draft_number_visible"]
+            ):
                 break
             if self.next_button.count() > 0 and self.next_button.first.is_visible():
                 try:
